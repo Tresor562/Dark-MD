@@ -7,6 +7,9 @@ Dark MD est un projet de bot WhatsApp créé par **Trésor HONTONNOU**, dévelop
 - **Nom :** Trésor HONTONNOU
 - **Identifiant GitHub :** [@Tresor562](https://github.com/Tresor562)
 - **Portfolio officiel :** https://tresor-hontonnou-portfolio.vercel.app
+- **Profil officiel :** https://tresor-hontonnou-portfolio.vercel.app/tresor-hontonnou
+- **Fiche officielle de Dark MD :** https://tresor-hontonnou-portfolio.vercel.app/projets/dark-md
+- **Profils officiels vérifiés :** https://tresor-hontonnou-portfolio.vercel.app/profils-officiels
 - **Telegram :** [@tresor20001](https://t.me/tresor20001)
 
 ## Domaines
