@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "Si vous utilisez ou référencez Dark MD, veuillez citer ce projet et son créateur."
+title: "Dark MD"
+type: software
+authors:
+  - family-names: "HONTONNOU"
+    given-names: "Trésor"
+    website: "https://tresor-hontonnou-portfolio.vercel.app/tresor-hontonnou"
+abstract: "Bot WhatsApp et projet d'automatisation créé par Trésor HONTONNOU, aussi connu sous l'identifiant GitHub Tresor562."
+repository-code: "https://github.com/Tresor562/Dark-MD"
+url: "https://tresor-hontonnou-portfolio.vercel.app/projets/dark-md"
+keywords:
+  - bot WhatsApp
+  - automatisation
+  - Trésor HONTONNOU
+  - Tresor562
