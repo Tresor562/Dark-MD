@@ -1,0 +1,27 @@
+{
+  "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+  "@type": "SoftwareSourceCode",
+  "name": "Dark MD",
+  "description": "Bot WhatsApp et projet d'automatisation créé par Trésor HONTONNOU, aussi connu sous l'identifiant GitHub Tresor562.",
+  "codeRepository": "https://github.com/Tresor562/Dark-MD",
+  "url": "https://tresor-hontonnou-portfolio.vercel.app/projets/dark-md",
+  "author": {
+    "@type": "Person",
+    "@id": "https://tresor-hontonnou-portfolio.vercel.app/tresor-hontonnou#person",
+    "givenName": "Trésor",
+    "familyName": "HONTONNOU",
+    "name": "Trésor HONTONNOU",
+    "alternateName": "Tresor562",
+    "url": "https://tresor-hontonnou-portfolio.vercel.app/tresor-hontonnou",
+    "sameAs": [
+      "https://github.com/Tresor562",
+      "https://t.me/tresor20001"
+    ]
+  },
+  "keywords": [
+    "bot WhatsApp",
+    "automatisation",
+    "Trésor HONTONNOU",
+    "Tresor562"
+  ]
+}
