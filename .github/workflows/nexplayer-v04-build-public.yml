@@ -34,7 +34,6 @@ jobs:
           assert len(b64)==170504, len(b64)
           raw=base64.b64decode(b64, validate=True)
           sha=hashlib.sha256(raw).hexdigest()
-          print('archive bytes:',len(raw))
           print('archive sha256:',sha)
           expected='3edb07fcec024ded71285a05aa294b4563d603074f8dfccc5ea8f549a6b942fb'
           assert sha==expected, (sha,expected)
@@ -42,8 +41,6 @@ jobs:
           PY
           mkdir -p nexplayer
           unzip -q NexPlayer-v0.4-source.zip -d nexplayer
-          test -f nexplayer/app/build.gradle
-          test -f nexplayer/settings.gradle
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -66,26 +63,39 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Build NexPlayer debug APK
+      - name: Build or diagnose resource conflict
         shell: bash
         run: |
-          set -uo pipefail
-          if gradle -p nexplayer :app:assembleDebug --stacktrace --no-daemon; then
-            exit 0
+          set +e
+          gradle -p nexplayer :app:mergeDebugResources --stacktrace --no-daemon > build.log 2>&1
+          RC=$?
+          if [ $RC -eq 0 ]; then
+            cat build.log
+            gradle -p nexplayer :app:assembleDebug --stacktrace --no-daemon
+            exit $?
           fi
-          echo '===== RESOURCE CONFLICT DIAGNOSTIC ====='
+          echo '=== MERGE FAILURE SUMMARY ==='
+          grep -E 'Duplicate value for resource|resource attr/actionBarSize|actionBarSize|FAILURE:|What went wrong' build.log | head -n 40 || true
+          echo '=== MERGED VALUES OCCURRENCES ==='
           MERGED='nexplayer/app/build/intermediates/incremental/debug/mergeDebugResources/merged.dir/values/values.xml'
           if [ -f "$MERGED" ]; then
-            echo '--- all actionBarSize occurrences in merged values ---'
-            grep -n -C 3 'actionBarSize' "$MERGED" || true
-            echo '--- context around reported previous definition line 10735 ---'
-            sed -n '10725,10745p' "$MERGED" || true
+            grep -n -C 2 'actionBarSize' "$MERGED" | head -n 80 || true
+          else
+            echo 'merged values.xml not found'
           fi
-          echo '--- actionBarSize in transformed dependency resources ---'
-          grep -RIn -C 2 'name="actionBarSize"' "$HOME/.gradle/caches/8.9/transforms" 2>/dev/null | head -n 120 || true
-          echo '--- debug runtime dependency tree ---'
-          gradle -p nexplayer :app:dependencies --configuration debugRuntimeClasspath --no-daemon || true
-          exit 1
+          echo '=== MERGER.XML ORIGINS ==='
+          find nexplayer/app/build/intermediates -name merger.xml -print | while read f; do
+            if grep -q 'actionBarSize' "$f" 2>/dev/null; then
+              echo "FILE=$f"
+              grep -o '.\{0,180\}actionBarSize.\{0,180\}' "$f" | head -n 30 || true
+            fi
+          done
+          echo '=== TRANSFORMED DEPENDENCY RESOURCE ORIGINS ==='
+          grep -RIl 'name="actionBarSize"' "$HOME/.gradle/caches/8.9/transforms" 2>/dev/null | head -n 30 | while read f; do
+            echo "FILE=$f"
+            grep -n -C 1 'name="actionBarSize"' "$f" | head -n 10 || true
+          done
+          exit $RC
 
       - name: Upload debug APK
         if: success()
