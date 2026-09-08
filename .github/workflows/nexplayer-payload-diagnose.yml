@@ -1,0 +1,27 @@
+name: NexPlayer Payload Diagnose
+
+on:
+  push:
+    branches: [nexplayer-ci-v04]
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Hash suspect payload slices
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in q03 q04 q07 q08; do
+            echo "=== $f size=$(wc -c < ci_payload/$f) ==="
+            python3 - "$f" <<'PY'
+import hashlib, pathlib, sys
+name=sys.argv[1]
+s=pathlib.Path('ci_payload/'+name).read_bytes()
+for i in range(0,len(s),1000):
+    chunk=s[i:i+1000]
+    print(f'{name}:{i:05d}:{len(chunk):04d}:{hashlib.sha256(chunk).hexdigest()}')
+PY
+          done
