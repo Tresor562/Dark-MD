@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Hash suspect payload slices
+      - name: Hash q05 payload slices
         shell: bash
         run: |
           set -euo pipefail
-          for f in q03 q04 q07 q08; do
+          for f in q05a_exact q05b_exact; do
             echo "=== $f size=$(wc -c < ci_payload/$f) ==="
             python3 -c "import hashlib,pathlib,sys; n=sys.argv[1]; s=pathlib.Path('ci_payload/'+n).read_bytes(); [print(f'{n}:{i:05d}:{len(s[i:i+1000]):04d}:{hashlib.sha256(s[i:i+1000]).hexdigest()}') for i in range(0,len(s),1000)]" "$f"
           done
