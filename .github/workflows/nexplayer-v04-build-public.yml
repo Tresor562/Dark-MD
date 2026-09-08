@@ -69,8 +69,23 @@ jobs:
       - name: Build NexPlayer debug APK
         shell: bash
         run: |
-          set -euo pipefail
-          gradle -p nexplayer :app:assembleDebug --stacktrace --no-daemon
+          set -uo pipefail
+          if gradle -p nexplayer :app:assembleDebug --stacktrace --no-daemon; then
+            exit 0
+          fi
+          echo '===== RESOURCE CONFLICT DIAGNOSTIC ====='
+          MERGED='nexplayer/app/build/intermediates/incremental/debug/mergeDebugResources/merged.dir/values/values.xml'
+          if [ -f "$MERGED" ]; then
+            echo '--- all actionBarSize occurrences in merged values ---'
+            grep -n -C 3 'actionBarSize' "$MERGED" || true
+            echo '--- context around reported previous definition line 10735 ---'
+            sed -n '10725,10745p' "$MERGED" || true
+          fi
+          echo '--- actionBarSize in transformed dependency resources ---'
+          grep -RIn -C 2 'name="actionBarSize"' "$HOME/.gradle/caches/8.9/transforms" 2>/dev/null | head -n 120 || true
+          echo '--- debug runtime dependency tree ---'
+          gradle -p nexplayer :app:dependencies --configuration debugRuntimeClasspath --no-daemon || true
+          exit 1
 
       - name: Upload debug APK
         if: success()
