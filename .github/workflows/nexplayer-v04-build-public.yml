@@ -70,10 +70,22 @@ jobs:
           manifest.write_text(m)
 
           main_layout = Path('nexplayer/app/src/main/res/layout/activity_main.xml')
-          x = main_layout.read_text()
-          x = x.replace(' android:selected="true"', '')
+          x = main_layout.read_text().replace(' android:selected="true"', '')
           main_layout.write_text(x)
+
+          online = Path('nexplayer/app/src/main/java/tech/nextech/nexplayer/OnlineToolsActivity.java')
+          o = online.read_text()
+          o = o.replace(r'name.replaceFirst("\.[^.]+$","")', r'name.replaceFirst("\\.[^.]+$","")')
+          o = o.replace(r'replaceFirst("\.media$","")', r'replaceFirst("\\.media$","")')
+          online.write_text(o)
+
+          player = Path('nexplayer/app/src/main/java/tech/nextech/nexplayer/PlayerActivity.java')
+          p = player.read_text()
+          p = p.replace(r'matches(".*\.(mp3|m4a|aac|flac|wav|ogg)(\?.*)?$")', r'matches(".*\\.(mp3|m4a|aac|flac|wav|ogg)(\\?.*)?$")')
+          player.write_text(p)
           PY
+          grep -n 'replaceFirst' nexplayer/app/src/main/java/tech/nextech/nexplayer/OnlineToolsActivity.java | tail -n 2
+          grep -n 'contentType=.*matches' nexplayer/app/src/main/java/tech/nextech/nexplayer/PlayerActivity.java
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
