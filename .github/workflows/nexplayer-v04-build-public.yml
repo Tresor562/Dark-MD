@@ -42,6 +42,38 @@ jobs:
           mkdir -p nexplayer
           unzip -q NexPlayer-v0.4-source.zip -d nexplayer
 
+      - name: Patch legacy dependency conflicts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          gradle = Path('nexplayer/app/build.gradle')
+          s = gradle.read_text()
+          old = "    implementation 'com.github.NorthernCaptain:TAndroidLame:1.1'"
+          new = "    implementation('com.github.NorthernCaptain:TAndroidLame:1.1') {\n        exclude group: 'com.android.support'\n    }"
+          if old not in s:
+              raise SystemExit('TAndroidLame dependency line not found')
+          gradle.write_text(s.replace(old, new))
+
+          manifest = Path('nexplayer/app/src/main/AndroidManifest.xml')
+          m = manifest.read_text()
+          m = m.replace(
+              '<manifest xmlns:android="http://schemas.android.com/apk/res/android">',
+              '<manifest xmlns:android="http://schemas.android.com/apk/res/android"\n    xmlns:tools="http://schemas.android.com/tools">'
+          )
+          m = m.replace(
+              '        android:allowBackup="false"',
+              '        android:allowBackup="false"\n        tools:replace="android:allowBackup"'
+          )
+          manifest.write_text(m)
+          PY
+          echo '--- TAndroidLame dependency ---'
+          grep -A3 -B1 'TAndroidLame' nexplayer/app/build.gradle
+          echo '--- Manifest override ---'
+          grep -A3 -B1 'allowBackup' nexplayer/app/src/main/AndroidManifest.xml
+
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
@@ -63,42 +95,15 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Build or diagnose resource conflict
+      - name: Build NexPlayer debug APK
         shell: bash
         run: |
-          set +e
-          gradle -p nexplayer :app:mergeDebugResources --stacktrace --no-daemon > build.log 2>&1
-          RC=$?
-          if [ $RC -eq 0 ]; then
-            cat build.log
-            gradle -p nexplayer :app:assembleDebug --stacktrace --no-daemon
-            exit $?
-          fi
-          echo '=== MERGE FAILURE SUMMARY ==='
-          grep -E 'Duplicate value for resource|resource attr/actionBarSize|actionBarSize|FAILURE:|What went wrong' build.log | head -n 40 || true
-          echo '=== MERGED VALUES OCCURRENCES ==='
-          MERGED='nexplayer/app/build/intermediates/incremental/debug/mergeDebugResources/merged.dir/values/values.xml'
-          if [ -f "$MERGED" ]; then
-            grep -n -C 2 'actionBarSize' "$MERGED" | head -n 80 || true
-          else
-            echo 'merged values.xml not found'
-          fi
-          echo '=== MERGER.XML ORIGINS ==='
-          find nexplayer/app/build/intermediates -name merger.xml -print | while read f; do
-            if grep -q 'actionBarSize' "$f" 2>/dev/null; then
-              echo "FILE=$f"
-              grep -o '.\{0,180\}actionBarSize.\{0,180\}' "$f" | head -n 30 || true
-            fi
-          done
-          echo '=== TRANSFORMED DEPENDENCY RESOURCE ORIGINS ==='
-          grep -RIl 'name="actionBarSize"' "$HOME/.gradle/caches/8.9/transforms" 2>/dev/null | head -n 30 | while read f; do
-            echo "FILE=$f"
-            grep -n -C 1 'name="actionBarSize"' "$f" | head -n 10 || true
-          done
-          exit $RC
+          set -euo pipefail
+          gradle -p nexplayer :app:assembleDebug --stacktrace --no-daemon
+          test -f nexplayer/app/build/outputs/apk/debug/app-debug.apk
+          sha256sum nexplayer/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload debug APK
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: NexPlayer-v0.4-debug-apk
