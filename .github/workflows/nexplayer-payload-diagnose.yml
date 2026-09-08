@@ -16,12 +16,5 @@ jobs:
           set -euo pipefail
           for f in q03 q04 q07 q08; do
             echo "=== $f size=$(wc -c < ci_payload/$f) ==="
-            python3 - "$f" <<'PY'
-import hashlib, pathlib, sys
-name=sys.argv[1]
-s=pathlib.Path('ci_payload/'+name).read_bytes()
-for i in range(0,len(s),1000):
-    chunk=s[i:i+1000]
-    print(f'{name}:{i:05d}:{len(chunk):04d}:{hashlib.sha256(chunk).hexdigest()}')
-PY
+            python3 -c "import hashlib,pathlib,sys; n=sys.argv[1]; s=pathlib.Path('ci_payload/'+n).read_bytes(); [print(f'{n}:{i:05d}:{len(s[i:i+1000]):04d}:{hashlib.sha256(s[i:i+1000]).hexdigest()}') for i in range(0,len(s),1000)]" "$f"
           done
